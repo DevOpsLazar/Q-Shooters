@@ -1,13 +1,13 @@
 ﻿{
-  "name": "com.devopslazar.q-shooters",
-  "displayName": "Q-Shooters",
-  "version": "0.1.0",
-  "description": "Custom fork/variants of P-Shooters scripts for VRChat/UdonSharp.",
-  "unity": "2022.3",
-  "author": {
-    "name": "devopslazar"
-  },
-  "vpmDependencies": {
-    "com.vrchat.udonsharp": ">=1.1.0"
-  }
+    "name":  "com.devopslazar.q-shooters",
+    "displayName":  "Q-Shooters",
+    "version":  "0.1.0",
+    "description":  "Custom fork/variants of P-Shooters scripts for VRChat/UdonSharp.",
+    "unity":  "2022.3",
+    "author":  {
+                   "name":  "devopslazar"
+               },
+    "vpmDependencies":  {
+                            "com.vrchat.udonsharp":  "\u003e=1.1.0"
+                        }
 }
