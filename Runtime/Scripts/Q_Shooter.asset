@@ -12,16 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: Q_Shooter
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: a73a9ff7188b73b49b5d541225c8ae10,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: b3ee5d4575d246f4a8c964faa3fc3b20,
     type: 2}
   udonAssembly: 
   assemblyError: 
-  sourceCsScript: {fileID: 11500000, guid: 043e6d5620582cb478d8550212c90239, type: 3}
+  sourceCsScript: {fileID: 11500000, guid: 06b44e5a3bab401d9336239557a23e79, type: 3}
   scriptVersion: 2
   compiledVersion: 2
   behaviourSyncMode: 4
   hasInteractEvent: 0
-  scriptID: -4495876179459869155
+  scriptID: 554774405168271048
   serializationData:
     SerializedFormat: 2
     SerializedBytes: 
@@ -803,7 +803,7 @@ MonoBehaviour:
       Data: 42|System.RuntimeType, mscorlib
     - Name: 
       Entry: 1
-      Data: MMMaellon.P_Shooters.AmmoTracker, com.mmmaellon.p-shooters
+      Data: DevOpsLazar.Q_Shooters.AmmoTracker, com.devopslazar.q-shooters
     - Name: 
       Entry: 8
       Data: 

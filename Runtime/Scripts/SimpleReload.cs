@@ -1,0 +1,313 @@
+
+using UdonSharp;
+using UnityEngine;
+using VRC.SDKBase;
+using VRC.Udon;
+using MMMaellon;
+
+namespace DevOpsLazar.Q_Shooters
+{
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
+    public class SimpleReload : AmmoTracker
+    {
+        public KeyCode desktopReloadShortcut = KeyCode.E;
+        public SmartObjectSync vrReloadPickup = null;
+        [Tooltip("How much ammo each bullet consumes")]
+        public int ammoPerShot = 1;
+
+        [Tooltip("How much ammo can fit in the magazine. This is refilled on every reload")]
+        public int magCapacity = 6;
+        [Tooltip("How much ammo can be chambered. Some guns like shotguns require chambering each round instead of loading a magazine. Set to 0 to have the gun shoot directly from the mag.")]
+        public int chamberCapacity = 0;
+        [Tooltip("Reload when you aim straight down. Set to 0 to disable")]
+        public float pointDownToReloadAngle = 15f;
+        [Tooltip("Reload when you aim straight up. Set to 0 to disable")]
+        public float pointUpToReloadAngle = 15f;
+        [Tooltip("Only applies if starting ammo was defined above. Start with starting ammo already loaded into magazine and a round chambered.")]
+        public bool startLoaded = true;
+        [Tooltip("If this is true, then the gun automatically reloads if the player pulls the trigger while it's empty.")]
+        public bool autoReload = true;
+        public AudioClip[] magInsertSounds;
+        [Range(0.0f, 1.0f)]
+        public float magInsertVol = 1.0f;
+        public AudioClip[] chamberSounds;
+        [Range(0.0f, 1.0f)]
+        public float chamberVol = 1.0f;
+
+        
+        [System.NonSerialized, UdonSynced(UdonSyncMode.None), FieldChangeCallback(nameof(magAmmo))]
+        public int _magAmmo;
+        public int magAmmo
+        {
+            get => _magAmmo;
+            set
+            {
+                if (_magAmmo > value)
+                {
+                    EjectEmptyFX();
+                }
+                _magAmmo = value;
+                if (!Utilities.IsValid(shooter))
+                {
+                    return;
+                }
+                if (shooter.sync.IsLocalOwner())
+                {
+                    RequestSerialization();
+                }
+                shooter.animator.SetInteger("mag", value);
+            }
+        }
+
+        [System.NonSerialized, UdonSynced(UdonSyncMode.None), FieldChangeCallback(nameof(chamberAmmo))]
+        public int _chamberAmmo = 0;
+        public int chamberAmmo
+        {
+            get => _chamberAmmo;
+            set
+            {
+                if (_chamberAmmo > value)
+                {
+                    EjectEmptyFX();
+                } else if (_chamberAmmo < value)
+                {
+                    ChamberFX();
+                }
+                _chamberAmmo = value;
+                if (shooter.sync.IsLocalOwner())
+                {
+                    RequestSerialization();
+                }
+                shooter.animator.SetInteger("chamber", chamberCapacity > 0 ? value : -1001);
+            }
+        }
+
+
+        public virtual void Start()
+        {
+            if (startLoaded)
+            {
+                chamberAmmo = chamberCapacity;
+                magAmmo = magCapacity;
+            }
+        }
+
+        public override void OnEnable()
+        {
+            //reset all the animator stuff
+            base.OnEnable();
+            chamberAmmo = chamberAmmo;
+            magAmmo = magAmmo;
+        }
+
+        public override void Shoot()
+        {
+            if (shooter.state == Q_Shooter.STATE_IDLE)
+            {
+                if (CanShoot())
+                {
+                    shooter.state = Q_Shooter.STATE_SHOOT;
+                } else if (autoReload)
+                {
+                    Reload();
+                } else
+                {
+                    shooter.state = Q_Shooter.STATE_EMPTY;
+                }
+            }
+        }
+
+        public override bool CanReload()
+        {
+            return (chamberCapacity <= 0) ? magCapacity > 0 && magAmmo < magCapacity : chamberAmmo < chamberCapacity;
+        }
+
+        Vector3 pointVector;
+        public override void UpdateLoop()
+        {
+            if (!loop)
+            {
+                return;
+            }
+            SendCustomEventDelayedFrames(nameof(UpdateLoop), 0, VRC.Udon.Common.Enums.EventTiming.LateUpdate);
+            
+            if (!Utilities.IsValid(shooter))
+            {
+                return;
+            }
+            if (shooter.sync.IsLocalOwner() && shooter.sync.IsHeld())
+            {
+                if (Input.GetKeyDown(desktopReloadShortcut))
+                {
+                    Reload();
+                }
+                if (CanReload())
+                {
+                    pointVector = transform.rotation * Vector3.forward;
+                    if (pointDownToReloadAngle > 0 && pointDownToReloadAngle >= Vector3.Angle(Vector3.down, pointVector))
+                    {
+                        Reload();
+                    }
+                    else if (pointUpToReloadAngle > 0 && pointUpToReloadAngle >= Vector3.Angle(Vector3.up, pointVector))
+                    {
+                        Reload();
+                    }
+                }
+            }
+            if (Utilities.IsValid(vrReloadPickup) && vrReloadPickup.IsHeld())
+            {
+                if (vrReloadPickup.IsLocalOwner())
+                {
+                    if (vrReloadPickup.pickup.currentHand == VRC_Pickup.PickupHand.Left)
+                    {
+                        VRCPlayerApi.TrackingData data = vrReloadPickup.owner.GetTrackingData(VRCPlayerApi.TrackingDataType.LeftHand);
+                        vrReloadPickup.transform.position = data.position;
+                        vrReloadPickup.transform.rotation = data.rotation * Quaternion.Euler(0, 67.5f, 90); //found experimentally
+                    }
+                    else if (vrReloadPickup.pickup.currentHand == VRC_Pickup.PickupHand.Right)
+                    {
+                        VRCPlayerApi.TrackingData data = vrReloadPickup.owner.GetTrackingData(VRCPlayerApi.TrackingDataType.RightHand);
+                        vrReloadPickup.transform.position = data.position;
+                        vrReloadPickup.transform.rotation = data.rotation * Quaternion.Euler(0, 67.5f, 90);
+                    }
+                } else
+                {
+                    vrReloadPickup.Interpolate();
+                }
+            }
+        }
+
+        [System.NonSerialized]
+        public int actualChamberAmmoAmount;
+        public override bool ChamberAmmo()
+        {
+            if (!Utilities.IsValid(shooter) || !shooter.sync.IsLocalOwner() || (chamberCapacity <= 0) || ammoPerShot <= 0)
+            {
+                return false;
+            }
+            shooter._print("ChamberAmmo");
+            actualChamberAmmoAmount = 1;
+            if (magCapacity > 0)
+            {
+                actualChamberAmmoAmount = Mathf.Min(magAmmo, Mathf.Min(ammoPerShot, chamberCapacity - chamberAmmo));
+                if (magAmmo > 0)
+                {
+                    magAmmo -= actualChamberAmmoAmount;
+                } else
+                {
+                    //NOT ENOUGH AMMO IN MAG
+                    shooter._print("NOT ENOUGH AMMO IN MAG");
+                    return false;
+                }
+            }
+            chamberAmmo += actualChamberAmmoAmount;
+            return true;
+        }
+        public override bool CanShoot()
+        {
+            if (chamberCapacity > 0)
+            {
+                return chamberAmmo >= ammoPerShot;
+            }
+            if (Utilities.IsValid(vrReloadPickup) && vrReloadPickup.IsHeld())
+            {
+                return false;
+            }
+            if (ammoPerShot <= 0 || magCapacity <= 0)
+            {
+                return true;
+            }
+            if (magAmmo >= ammoPerShot)
+            {
+                return true;
+            }
+            return false;
+        }
+        public override bool ConsumeAmmo()
+        {
+            if (Utilities.IsValid(shooter) && shooter.sync.IsLocalOwner() && CanShoot())
+            {
+                if ((chamberCapacity <= 0))
+                {
+                    magAmmo -= ammoPerShot;
+                } else
+                {
+                    chamberAmmo -= ammoPerShot;
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public override void Reload()
+        {
+            if (!Utilities.IsValid(shooter) || !shooter.sync.IsLocalOwner())
+            {
+                return;
+            }
+            if (shooter.state != Q_Shooter.STATE_IDLE && shooter.state != Q_Shooter.STATE_EMPTY)
+            {
+                return;
+            }
+            if (CanReload())
+            {
+                shooter.state = Q_Shooter.STATE_RELOAD;
+            } else
+            {
+                shooter.state = Q_Shooter.STATE_EMPTY;
+            }
+        }
+
+        public override void ReloadEnd()
+        {
+            if (!Utilities.IsValid(shooter) || !shooter.sync.IsLocalOwner() || shooter.state == Q_Shooter.STATE_DISABLED)
+            {
+                return;
+            }
+            magAmmo = magCapacity;
+            shooter.state = Q_Shooter.STATE_IDLE;
+        }
+
+        public override void OnPickup()
+        {
+            if (Utilities.IsValid(vrReloadPickup))
+            {
+                vrReloadPickup.pickupable = shooter.sync.IsLocalOwner();
+            }
+        }
+        public override void OnDrop()
+        {
+            if (Utilities.IsValid(vrReloadPickup))
+            {
+                vrReloadPickup.pickupable = false;
+            }
+        }
+
+        public void MagInsert()
+        {
+            RandomOneShot(magInsertSounds, magInsertVol);
+            if (Utilities.IsValid(vrReloadPickup))
+            {
+                vrReloadPickup.pickup.Drop();
+            }
+        }
+        public void ChamberFX()
+        {
+            RandomOneShot(chamberSounds, chamberVol);
+        }
+
+        public override void ResetAmmo()
+        {
+            if (startLoaded)
+            {
+                chamberAmmo = chamberCapacity;
+                magAmmo = magCapacity;
+            } else
+            {
+                chamberAmmo = 0;
+                magAmmo = 0;
+            }
+        }
+    }
+}
+

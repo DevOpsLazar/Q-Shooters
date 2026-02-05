@@ -1,8 +1,9 @@
-﻿
+
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
+using MMMaellon;
 #if !COMPILER_UDONSHARP && UNITY_EDITOR
 using VRC.SDKBase.Editor.BuildPipeline;
 using UnityEditor;
@@ -10,7 +11,7 @@ using UdonSharpEditor;
 using System.Collections.Immutable;
 #endif
 
-namespace MMMaellon.P_Shooters
+namespace DevOpsLazar.Q_Shooters
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual), RequireComponent(typeof(SmartObjectSync)), RequireComponent(typeof(Animator))]
     public class Q_Shooter : SmartObjectSyncListener
@@ -27,7 +28,7 @@ namespace MMMaellon.P_Shooters
         {
             if (printDebugMessages)
             {
-                Debug.Log("<color=yellow>[P-Shooters Q_Shooter.cs] " + name + ": </color>" + message);
+                Debug.Log("<color=yellow>[Q-Shooters Q_Shooter.cs] " + name + ": </color>" + message);
             }
         }
 
@@ -175,7 +176,7 @@ namespace MMMaellon.P_Shooters
             }
             if (!Helper.IsEditable(shooter))
             {
-                Helper.ErrorLog(shooter, "P-Shooter is not editable");
+                Helper.ErrorLog(shooter, "Q-Shooter is not editable");
                 return;
             }
             SerializedObject serialized = new SerializedObject(shooter);

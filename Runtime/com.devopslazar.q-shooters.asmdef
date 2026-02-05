@@ -1,36 +1,25 @@
-﻿{
-    "name":  "com.devopslazar.q-shooters",
-    "references":  [
-                       "VRC.SDK3",
-                       "VRC.SDKBase",
-                       "VRC.Udon",
-                       "UdonSharp.Runtime",
-                       "UdonSharp.Editor",
-                       "Unity.TextMeshPro",
-                       "com.mmmaellon.smartobjectsync",
-                       "Cinemachine",
-                       "Cyan.PlayerObjectPool",
-                       "Cyan.PlayerObjectPool.Editor",
-                       "Cyan.PlayerObjectPool.UdonSharp",
-                       "com.mmmaellon.p-shooters"
-                   ],
-    "includePlatforms":  [
-
-                         ],
-    "excludePlatforms":  [
-
-                         ],
-    "allowUnsafeCode":  false,
-    "overrideReferences":  false,
-    "precompiledReferences":  [
-
-                              ],
-    "autoReferenced":  true,
-    "defineConstraints":  [
-
-                          ],
-    "versionDefines":  [
-
-                       ],
-    "noEngineReferences":  false
+{
+    "name": "com.devopslazar.q-shooters",
+    "references": [
+        "VRC.SDK3",
+        "VRC.SDKBase",
+        "VRC.Udon",
+        "UdonSharp.Runtime",
+        "UdonSharp.Editor",
+        "Unity.TextMeshPro",
+        "com.mmmaellon.smartobjectsync",
+        "Cinemachine",
+        "Cyan.PlayerObjectPool",
+        "Cyan.PlayerObjectPool.Editor",
+        "Cyan.PlayerObjectPool.UdonSharp"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

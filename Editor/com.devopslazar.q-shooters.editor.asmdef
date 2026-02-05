@@ -1,0 +1,21 @@
+{
+  "name": "com.devopslazar.q-shooters.editor",
+  "references": [
+    "VRC.SDK3",
+    "VRC.SDK3.Editor",
+    "VRC.SDKBase",
+    "VRC.SDKBase.Editor",
+    "UdonSharp.Editor",
+    "UdonSharp.Runtime",
+    "com.mmmaellon.smartobjectsync",
+    "com.devopslazar.q-shooters"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "autoReferenced": true,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "defineConstraints": [],
+  "optionalUnityReferences": []
+}
